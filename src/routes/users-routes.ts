@@ -44,13 +44,42 @@ export const UsersRoutes = async (app: FastifyInstance) => {
       return reply.status(404).send({ message: "Resource not found" });
     }
 
-    
-
     reply.status(201).send({
       id: user.id,
       name: user.name,
       email: user.email,
     });
+  });
+  app.put("/:id", async (request, reply) => {
+    const paramsSchema = z.object({
+      id: z.string(),
+    });
+    const newUserSchema = z.object({
+      name: z.string().optional(),
+      email: z.string().optional(),
+      password: z.string().optional(),
+    });
+
+    const { id } = paramsSchema.parse(request.params);
+    const newUser = newUserSchema.parse(request.body);
+
+    const mappedUser = users.find((u) => u.id === id);
+
+    if (!mappedUser) {
+      return reply.status(404).send({ message: "Resource not found" });
+    }
+
+    const tempArray: User[] = users.filter((u) => u.id !== id);
+
+    users = [
+      ...tempArray,
+      {
+        ...mappedUser,
+        ...newUser,
+      },
+    ];
+
+    reply.status(200).send();
   });
 
   app.get("/", async (_, reply) => {
